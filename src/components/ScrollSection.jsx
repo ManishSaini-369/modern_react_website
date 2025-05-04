@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Car from '../assets/car/car.mp4';
 import Truck from '../assets/truck.mp4';
 import CompleteBodyImg from '../assets/car/complete_body.png';
@@ -9,139 +9,109 @@ import CarFrontVideo from '../assets/car/front.mp4';
 import CarCabinVideo from '../assets/car/cabin.mp4';
 import CarExteriorVideo from '../assets/car/exterior.mp4';
 import CarTrunkVideo from '../assets/car/trunk.mp4';
-import {FaPlay, FaPause} from "react-icons/fa";
+import { FaPlay, FaPause } from 'react-icons/fa';
 
 const parts = [
-  {
-    id: 'complete',
-    label: 'Complete body',
-    image: CompleteBodyImg,
-    video: Car
-  }, {
-    id: 'front',
-    label: 'Front',
-    image: FrontImg,
-    video: CarFrontVideo
-  }, {
-    id: 'cabin',
-    label: 'Cabin',
-    image: CompleteBodyImg,
-    video: CarCabinVideo
-  }, {
-    id: 'trunk',
-    label: 'Trunk',
-    image: TrunkImg,
-    video: CarTrunkVideo
-  }, {
-    id: 'exterior',
-    label: 'Exterior',
-    image: ExteriorImg,
-    video: CarExteriorVideo
-  }
+  { id: 'complete', label: 'Complete body', image: CompleteBodyImg, video: Car },
+  { id: 'front', label: 'Front', image: FrontImg, video: CarFrontVideo },
+  { id: 'cabin', label: 'Cabin', image: CompleteBodyImg, video: CarCabinVideo },
+  { id: 'trunk', label: 'Trunk', image: TrunkImg, video: CarTrunkVideo },
+  { id: 'exterior', label: 'Exterior', image: ExteriorImg, video: CarExteriorVideo }
 ];
 
 const ScrollSection = () => {
-  const [section,
-    setSection] = useState('passenger');
-  const [activePart,
-    setActivePart] = useState('complete');
-  const [isPlaying,
-    setIsPlaying] = useState(true);
-  const [progress,
-    setProgress] = useState(0);
+  const [section, setSection] = useState('passenger');
+  const [activePart, setActivePart] = useState('complete');
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
 
   const videoRef = useRef(null);
   const triggerRef = useRef(null);
 
+  const selectedPart = parts.find((p) => p.id === activePart);
+
+  // Handle video change
   useEffect(() => {
     const video = videoRef.current;
-  
     if (video) {
-      video.pause(); // stop current playback
-      video.load();  // load the new source
-  
+      video.pause();
+      video.load();
+
       const handleCanPlay = () => {
-        video.play().catch((err) => {
-          console.warn('Play failed:', err);
-        });
+        video.play().catch((err) => console.warn('Play failed:', err));
         setIsPlaying(true);
+        setProgress(0); // reset progress when switching videos
       };
-  
+
       video.addEventListener('canplay', handleCanPlay);
-  
+
       return () => {
         video.removeEventListener('canplay', handleCanPlay);
       };
     }
   }, [section, activePart]);
-  
 
+  // Handle scroll for section switch
   useEffect(() => {
     const handleScroll = () => {
-      const triggerTop = triggerRef
-        .current
-        .getBoundingClientRect()
-        .top;
+      const triggerTop = triggerRef.current.getBoundingClientRect().top;
       const isCommercial = triggerTop < window.innerHeight / 2;
-      setSection(isCommercial
-        ? 'commercial'
-        : 'passenger');
-
-      // Reset part to complete when switching section
-      setActivePart('complete');
+      setSection(isCommercial ? 'commercial' : 'passenger');
+      setActivePart('complete'); // reset part
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Update video progress
   useEffect(() => {
     const video = videoRef.current;
+    const updateProgress = () => {
+      if (video && video.duration) {
+        const current = (video.currentTime / video.duration) * 100;
+        setProgress(current);
+      }
+    };
+
     if (video) {
-      video.load();
-      video.play();
-      setIsPlaying(true);
+      video.addEventListener('timeupdate', updateProgress);
     }
-  }, [section, activePart]);
+
+    return () => {
+      if (video) {
+        video.removeEventListener('timeupdate', updateProgress);
+      }
+    };
+  }, []);
 
   const handlePlayPause = () => {
     const video = videoRef.current;
-    if (!video) 
-      return;
-    
+    if (!video) return;
+
     if (isPlaying) {
       video.pause();
     } else {
       video.currentTime = 0;
       video.play();
     }
-
     setIsPlaying(!isPlaying);
   };
 
-  const selectedPart = parts.find((p) => p.id === activePart);
-
   return (
     <div className="relative">
-      
       {/* Sticky Section */}
       <div className="h-screen sticky top-0 bg-black text-white flex">
         {/* LEFT PANEL */}
         <div className="w-1/2 flex flex-col justify-center px-16 space-y-10">
           <div>
-            <div
-              className={section === 'passenger'
-              ? 'text-white'
-              : 'text-gray-600'}>
+            <div className={section === 'passenger' ? 'text-white' : 'text-gray-600'}>
               <h1 className="text-3xl font-bold mb-2">Passenger vehicles</h1>
-              <p>Revving up innovation from<br/>interior to exterior.</p>
+              <p>Revving up innovation from<br />interior to exterior.</p>
             </div>
-            <div
-              className={section === 'commercial'
-              ? 'text-white mt-6'
-              : 'text-gray-600 mt-6'}>
+            <div className={section === 'commercial' ? 'text-white mt-6' : 'text-gray-600 mt-6'}>
               <h1 className="text-3xl font-bold mb-2">Commercial vehicles</h1>
-              <p>Advancing engineering<br/>for heavy-duty vehicles.</p>
+              <p>Advancing engineering<br />for heavy-duty vehicles.</p>
             </div>
           </div>
         </div>
@@ -155,13 +125,12 @@ const ScrollSection = () => {
             muted
             playsInline
             loop
-            className="w-full h-auto">
+            className="w-full h-auto"
+          >
             <source
-              src={section === 'passenger'
-              ? selectedPart
-                ?.video
-                : Truck}
-              type="video/mp4"/>
+              src={section === 'passenger' ? selectedPart?.video : Truck}
+              type="video/mp4"
+            />
           </video>
 
           {/* Part Selector (only for passenger) */}
@@ -171,26 +140,30 @@ const ScrollSection = () => {
                 <div
                   key={part.id}
                   onClick={() => setActivePart(part.id)}
-                  className={`flex flex-col items-center text-sm cursor-pointer ${activePart === part.id
-                  ? 'text-white'
-                  : 'text-gray-400'}`}>
+                  className={`flex flex-col items-center text-sm cursor-pointer ${
+                    activePart === part.id ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
                   <div
-                    className={`w-10 h-6 rounded overflow-hidden ${activePart === part.id
-                    ? 'opacity-100'
-                    : 'opacity-50'}`}>
-                    <img src={part.image} alt={part.label} className="w-full h-full object-cover"/>
+                    className={`w-10 h-6 rounded overflow-hidden ${
+                      activePart === part.id ? 'opacity-100' : 'opacity-50'
+                    }`}
+                  >
+                    <img src={part.image} alt={part.label} className="w-full h-full object-cover" />
                   </div>
                   <span className="mt-1">{part.label}</span>
                 </div>
               ))}
 
-              {/* Play/Pause Button (moved here) */}
+              {/* Play/Pause Button */}
               <button
                 onClick={handlePlayPause}
-                className="relative w-12 h-12 rounded-full ml-4 flex items-center justify-center group">
+                className="relative w-12 h-12 rounded-full ml-4 flex items-center justify-center group"
+              >
                 <svg
                   className="absolute top-0 left-0 w-full h-full transform -rotate-90"
-                  viewBox="0 0 36 36">
+                  viewBox="0 0 36 36"
+                >
                   <circle
                     className="text-gray-600"
                     stroke="currentColor"
@@ -198,7 +171,8 @@ const ScrollSection = () => {
                     fill="none"
                     cx="18"
                     cy="18"
-                    r="16"/>
+                    r="16"
+                  />
                   <circle
                     className="text-white"
                     stroke="currentColor"
@@ -210,17 +184,13 @@ const ScrollSection = () => {
                     strokeDasharray="100"
                     strokeDashoffset={100 - progress}
                     strokeLinecap="round"
-                    style={{
-                    transition: 'stroke-dashoffset 0.3s ease'
-                  }}/>
+                    style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+                  />
                 </svg>
                 <div className="relative z-10 text-white">
-                  {isPlaying
-                    ? <FaPause className="w-4 h-4"/>
-                    : <FaPlay className="w-4 h-4 ml-[1px]"/>}
+                  {isPlaying ? <FaPause className="w-4 h-4" /> : <FaPlay className="w-4 h-4 ml-[1px]" />}
                 </div>
               </button>
-
             </div>
           )}
         </div>
