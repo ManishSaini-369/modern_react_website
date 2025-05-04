@@ -10,6 +10,7 @@ const Automation = () => {
           src={Automotive}
           autoPlay
           loop
+          preload="auto"
           muted/>
 
       </div>
